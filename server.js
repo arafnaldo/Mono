@@ -138,6 +138,7 @@ io.on("connection", socket => {
 });
 
 // ===== SERVER START =====
-http.listen(3000, () => {
-  console.log("Server চলছে port 3000 এ");
+const PORT = process.env.PORT || 3000;  // Render জন্য
+http.listen(PORT, () => {
+  console.log(`Server চলছে port ${PORT} এ`);
 });

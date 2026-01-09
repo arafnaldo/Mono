@@ -20,14 +20,21 @@ const board = [
   { name: "বেনাপোল", price: 200, rent: 40 }
 ];
 
-// ===== FRONTEND (HTML + JS) =====
+const chanceCards = [
+  { text: "Bank gives you 100", action: p => p.money += 100 },
+  { text: "Pay 50 tax", action: p => p.money -= 50 },
+  { text: "Move forward 2 steps", action: p => p.position = (p.position + 2) % board.length },
+  { text: "Move backward 2 steps", action: p => p.position = (p.position - 2 + board.length) % board.length }
+];
+
+// ===== FRONTEND =====
 app.get("/", (req, res) => {
   res.send(`
 <!DOCTYPE html>
 <html lang="bn">
 <head>
 <meta charset="UTF-8">
-<title>যশোর অনলাইন মনোপলি</title>
+<title>যশোর জেলা Monopoly</title>
 <style>
 body { font-family:sans-serif; text-align:center; background:#f5f5f5; }
 #board { margin:20px auto; width: 600px; display:grid; grid-template-columns: repeat(5, 1fr); gap:5px;}
@@ -38,7 +45,7 @@ button { padding:8px; margin:5px; }
 </head>
 <body>
 
-<h2>🎲 যশোর জেলা মনোপলি</h2>
+<h2>🎲 যশোর জেলা Monopoly</h2>
 
 <input id="name" placeholder="তোমার নাম">
 <button onclick="join()">Join</button>
@@ -78,15 +85,16 @@ socket.on("updatePlayers", players => {
     cellHtml += "</div>";
     div.innerHTML += cellHtml;
   });
-
-  // Status
-  console.log(players);
 });
 
 socket.on("askBuy", index => {
   if(confirm(board[index].name + " কিনবে?")){
     socket.emit("buyProperty", index);
   }
+});
+
+socket.on("chanceCard", text => {
+  alert("Chance Card: " + text);
 });
 
 socket.on("connect", () => {
@@ -123,10 +131,25 @@ io.on("connection", socket => {
 
     const cell = board[player.position];
 
-    // Tax
+    // TAX
     if(cell.type==="tax") player.money -= cell.amount;
 
-    // Property
+    // JAIL
+    if(cell.type==="jail") {
+      // skip next turn
+      turn = (turn+1)%players.length;
+      io.emit("updatePlayers", players);
+      return;
+    }
+
+    // CHANCE
+    if(cell.type==="chance"){
+      const card = chanceCards[Math.floor(Math.random()*chanceCards.length)];
+      card.action(player);
+      socket.emit("chanceCard", card.text);
+    }
+
+    // PROPERTY
     if(cell.price){
       if(!cell.owner){
         socket.emit("askBuy", board.indexOf(cell));

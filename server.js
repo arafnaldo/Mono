@@ -184,5 +184,7 @@ io.on("connection", socket => {
 });
 
 // ===== SERVER START =====
-const PORT = process.env.PORT || 3000;
-http.listen(PORT, ()=>{ console.log("Server চলছে port "+PORT); });
+const PORT = process.env.PORT || 3000;   // Render auto PORT handle
+http.listen(PORT, () => {
+  console.log("Server চলছে port "+PORT);
+});
